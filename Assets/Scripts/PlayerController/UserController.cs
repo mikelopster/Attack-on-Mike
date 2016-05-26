@@ -38,7 +38,7 @@ public class UserController : MonoBehaviour
 	public MoveSettings moveSetting = new MoveSettings();
 	public InputSettings inputSetting = new InputSettings();
 	public MouseSettings mouseSetting = new MouseSettings();
-	public bool mainCharacter = true;
+	public bool mainCharacter = false;
 	public Player player;
 
 	Vector3 velocity = Vector3.zero;
@@ -106,7 +106,7 @@ public class UserController : MonoBehaviour
 		Debug.Log("click: "+clickInput+" eating: "+eating);
 	}
 
-	void GetInput(float forward, float side, bool jump, bool click) {
+	public void GetInput(float forward, float side, bool jump, bool click) {
 		forwardInput = forward;
 		sideInput = side;
 		jumpInput = jump;
