@@ -38,7 +38,7 @@ public class UserController : MonoBehaviour
 	public MoveSettings moveSetting = new MoveSettings();
 	public InputSettings inputSetting = new InputSettings();
 	public MouseSettings mouseSetting = new MouseSettings();
-	public bool mainCharactor = true;
+	public bool mainCharacter = true;
 	public Player player;
 
 	Vector3 velocity = Vector3.zero;
