@@ -143,6 +143,8 @@ public class UserController : MonoBehaviour
 	{
 		if (Mathf.Abs (forwardInput) > inputSetting.inputDelay || Mathf.Abs (sideInput) > inputSetting.inputDelay) 
 		{
+			Debug.Log ("Move Forward!");
+			GameManager.instance.SendMove (forwardInput, sideInput);
 			velocity.z = moveSetting.walkVel * forwardInput;
 			velocity.x = moveSetting.walkVel * sideInput;
 		}
@@ -156,6 +158,7 @@ public class UserController : MonoBehaviour
 	void Jump()
 	{
 		if (jumpInput && CanWalk ()) {
+			GameManager.instance.SendJump (true);
 			rBody.AddForce (0, moveSetting.jumpVel, 0, ForceMode.Impulse);
 		} else if (!CanWalk ())
 			jumpInput = false;
@@ -185,6 +188,8 @@ public class UserController : MonoBehaviour
 
 				if (target.tag == "NPC") {
 					player.eat (true, 0);
+					// Server 
+					GameManager.instance.SendEatToServer(true,0);
 					Destroy (target);
 					myScale = player.scale;
 					blood_clone = Instantiate (blood, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
@@ -195,8 +200,12 @@ public class UserController : MonoBehaviour
 				else if (target.tag == "Player") {
 					if (target.GetComponent<Player> ()) {
 						opponent = target.GetComponent<Player> ();
+						// Eat
+						GameManager.instance.SendEatToServer(false,opponent.level);
 						player.eat (false, opponent.level);
-						Debug.Log (player.scale);
+
+						// Eaten
+						GameManager.instance.SendIsEatenToServer(opponent._id,level);
 						opponent.eaten (level);
 						myScale = player.scale;
 						blood_clone = Instantiate (blood, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
