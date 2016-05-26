@@ -39,6 +39,7 @@ public class UserController : MonoBehaviour
 	public InputSettings inputSetting = new InputSettings();
 	public MouseSettings mouseSetting = new MouseSettings();
 	public bool mainCharactor = true;
+	public Player player;
 
 	Vector3 velocity = Vector3.zero;
 	Rigidbody rBody;
@@ -52,9 +53,11 @@ public class UserController : MonoBehaviour
 	Vector3 right = new Vector3 (-0.4f, 0.5f, 0);
 	Vector3 front = new Vector3 (0, 0.5f, 0.4f);
 	Vector3 back = new Vector3 (0, 0.5f, -0.4f);
-	bool openTurn, canWalk;
+	bool openTurn, canWalk, eating;
 	Animator anim;
 	Vector3 velo;
+	GameObject target = null;
+	Player opponent;
 
 	bool CanWalk()
 	{
@@ -78,6 +81,9 @@ public class UserController : MonoBehaviour
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = true;
 
+		player = GetComponent<Player> ();
+		eating = false;
+
 		if (GetComponent<Rigidbody> ()) 
 		{
 			rBody = GetComponent<Rigidbody> ();
@@ -97,6 +103,7 @@ public class UserController : MonoBehaviour
 		sideInput = Input.GetAxis (inputSetting.SIDE_AXIS);//Debug.Log (sideInput);
 		jumpInput = Input.GetButtonDown (inputSetting.JUMP_AXIS);//Debug.Log (jumpInput);
 		clickInput = Input.GetMouseButtonDown (mouseSetting.LEFT_CLICK);//Debug.Log (clickInput);
+		Debug.Log("click: "+clickInput+" eating: "+eating);
 	}
 
 	void GetInput(float forward, float side, bool jump, bool click) {
@@ -108,10 +115,11 @@ public class UserController : MonoBehaviour
 
 	void Update()
 	{
-		if (mainCharactor) GetInput ();
-	
-		Turn ();
-		Face ();
+		if (mainCharactor) {
+			GetInput ();
+			Turn ();
+			Face ();
+		}
 	}
 
 	void FixedUpdate()
@@ -165,12 +173,33 @@ public class UserController : MonoBehaviour
 
 	void Face()
 	{
-		fwd = transform.TransformDirection(Vector3.forward);
-		Debug.DrawRay(transform.position + mid, fwd * moveSetting.distToFace, Color.green);
-		if (Physics.Raycast (transform.position + mid, fwd, out hit , moveSetting.distToFace)) 
-		{
-			if (clickInput) Action (hit);
+		if (target != null) {
+			int level = player.level;
+
+			if (clickInput && !eating) {
+				eating = true;
+
+				if (target.tag == "NPC") {
+					player.eat (true, 0);
+					Destroy (target);
+				} 
+				else if (target.tag == "Player") {
+					if (target.GetComponent<Player> ()) {
+						opponent = target.GetComponent<Player> ();
+						player.eat (false, opponent.level);
+						Debug.Log (player.scale);
+						opponent.eaten (level);
+					}
+				}
+
+				eating = false;
+			}
 		}
+	}
+
+	public void changeScale(float scale)
+	{
+		gameObject.transform.localScale = new Vector3 (scale, scale, scale);
 	}
 
 	void Action(RaycastHit hit) 
@@ -183,9 +212,17 @@ public class UserController : MonoBehaviour
 		Cursor.lockState = CursorLockMode.Locked;
 	}
 
-	void OnCollisionEnter (Collision col)
+	void OnTriggerEnter (Collider col)
 	{
-		velocity.x = 0;
-		velocity.z = 0;
+		target = col.gameObject;
+		Debug.Log ("enter: "+target.tag);
+	}
+
+	void OnTriggerExit (Collider col)
+	{
+		if (target == col.gameObject) {
+			target = null;
+			Debug.Log ("exit: "+col.gameObject.tag);
+		}
 	}
 }
