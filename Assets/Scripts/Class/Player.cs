@@ -5,21 +5,36 @@ public class Player : MonoBehaviour {
 	public int level = 10000;
 	public float scale = 1.0f;
 	float ratio = 10000;
+	UserController userController;
 
-	public void eat (bool NPC) {
+	void Start()
+	{
+		userController = GetComponent<UserController> ();
+	}
+
+	public void eat (bool NPC, int opLevel) {
 		if (NPC)
-			level += level / 4;
-		else
 			level += 500;
+		else if (level - opLevel >= 5000)
+			level += level / 10;
+		else
+			level += opLevel / 4;
 
 		scale = level / ratio;
+		userController.changeScale (scale);
 	}
 
 	public void eaten (int opLevel) {
-		level -= opLevel / 4;
+		if (opLevel - level >= 5000)
+			died ();
+		
+		level -= opLevel / 10;
+
 		if (level < ratio)
 			died ();
+
 		scale = level / ratio;
+		userController.changeScale (scale);
 	}
 
 	public void died () {
