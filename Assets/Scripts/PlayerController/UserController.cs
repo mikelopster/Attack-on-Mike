@@ -115,12 +115,7 @@ public class UserController : MonoBehaviour
 
 	void Update()
 	{
-<<<<<<< HEAD
-
-		if (mainCharactor) { 
-=======
 		if (mainCharactor) {
->>>>>>> origin/master
 			GetInput ();
 			Turn ();
 			Face ();
