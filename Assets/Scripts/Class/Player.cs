@@ -4,6 +4,8 @@ using System.Collections;
 public class Player : MonoBehaviour {
 	public int level = 10000;
 	public float scale = 1.0f;
+	public string name;
+	public string _id;
 	float ratio = 10000;
 	UserController userController;
 
