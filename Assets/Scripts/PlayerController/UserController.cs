@@ -38,7 +38,7 @@ public class UserController : MonoBehaviour
 	public MoveSettings moveSetting = new MoveSettings();
 	public InputSettings inputSetting = new InputSettings();
 	public MouseSettings mouseSetting = new MouseSettings();
-	public bool mainCharactor = true;
+	public bool mainCharactor = false;
 
 	Vector3 velocity = Vector3.zero;
 	Rigidbody rBody;
@@ -99,7 +99,7 @@ public class UserController : MonoBehaviour
 		clickInput = Input.GetMouseButtonDown (mouseSetting.LEFT_CLICK);//Debug.Log (clickInput);
 	}
 
-	void GetInput(float forward, float side, bool jump, bool click) {
+	public void GetInput(float forward, float side, bool jump, bool click) {
 		forwardInput = forward;
 		sideInput = side;
 		jumpInput = jump;
@@ -108,10 +108,12 @@ public class UserController : MonoBehaviour
 
 	void Update()
 	{
-		if (mainCharactor) GetInput ();
-	
-		Turn ();
-		Face ();
+
+		if (mainCharactor) { 
+			GetInput ();
+			Turn ();
+			Face ();
+		}
 	}
 
 	void FixedUpdate()

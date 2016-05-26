@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Player : MonoBehaviour {
 	public int level = 10000;
-	public float scale = 1.0;
+	public float scale = 1.0f;
 	float ratio = 10000;
 
 	public void eat (bool NPC) {
