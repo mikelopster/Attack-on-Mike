@@ -40,6 +40,8 @@ public class UserController : MonoBehaviour
 	public MouseSettings mouseSetting = new MouseSettings();
 	public bool mainCharacter = false;
 	public Player player;
+	public GameObject blood;
+	public GameObject flesh;
 
 	Vector3 velocity = Vector3.zero;
 	Rigidbody rBody;
@@ -58,6 +60,9 @@ public class UserController : MonoBehaviour
 	Vector3 velo;
 	GameObject target = null;
 	Player opponent;
+	float myScale;
+	GameObject blood_clone;
+	GameObject flesh_clone;
 
 	bool CanWalk()
 	{
@@ -103,7 +108,6 @@ public class UserController : MonoBehaviour
 		sideInput = Input.GetAxis (inputSetting.SIDE_AXIS);//Debug.Log (sideInput);
 		jumpInput = Input.GetButtonDown (inputSetting.JUMP_AXIS);//Debug.Log (jumpInput);
 		clickInput = Input.GetMouseButtonDown (mouseSetting.LEFT_CLICK);//Debug.Log (clickInput);
-		Debug.Log("click: "+clickInput+" eating: "+eating);
 	}
 
 	public void GetInput(float forward, float side, bool jump, bool click) {
@@ -115,7 +119,7 @@ public class UserController : MonoBehaviour
 
 	void Update()
 	{
-		if (mainCharactor) {
+		if (mainCharacter) {
 			GetInput ();
 			Turn ();
 			Face ();
@@ -151,10 +155,10 @@ public class UserController : MonoBehaviour
 
 	void Jump()
 	{
-		if (jumpInput && CanWalk ()) 
-		{
+		if (jumpInput && CanWalk ()) {
 			rBody.AddForce (0, moveSetting.jumpVel, 0, ForceMode.Impulse);
-		}
+		} else if (!CanWalk ())
+			jumpInput = false;
 	}
 
 	void Turn()
@@ -182,6 +186,11 @@ public class UserController : MonoBehaviour
 				if (target.tag == "NPC") {
 					player.eat (true, 0);
 					Destroy (target);
+					myScale = player.scale;
+					blood_clone = Instantiate (blood, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
+					flesh_clone = Instantiate (flesh, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
+					blood_clone.transform.localScale = new Vector3 (myScale/2, myScale/2, myScale/2);
+					flesh_clone.transform.localScale = new Vector3 (myScale/2, myScale/2, myScale/2);
 				} 
 				else if (target.tag == "Player") {
 					if (target.GetComponent<Player> ()) {
@@ -189,6 +198,11 @@ public class UserController : MonoBehaviour
 						player.eat (false, opponent.level);
 						Debug.Log (player.scale);
 						opponent.eaten (level);
+						myScale = player.scale;
+						blood_clone = Instantiate (blood, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
+						flesh_clone = Instantiate (flesh, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
+						blood_clone.transform.localScale = new Vector3 (myScale/2, myScale/2, myScale/2);
+						flesh_clone.transform.localScale = new Vector3 (myScale/2, myScale/2, myScale/2);
 					}
 				}
 

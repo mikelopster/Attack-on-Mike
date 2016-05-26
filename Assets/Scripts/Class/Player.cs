@@ -16,9 +16,9 @@ public class Player : MonoBehaviour {
 		if (NPC)
 			level += 500;
 		else if (level - opLevel >= 5000)
-			level += level / 10;
+			level += level / 4;
 		else
-			level += opLevel / 4;
+			level += opLevel / 10;
 
 		scale = level / ratio;
 		userController.changeScale (scale);
@@ -27,8 +27,8 @@ public class Player : MonoBehaviour {
 	public void eaten (int opLevel) {
 		if (opLevel - level >= 5000)
 			died ();
-		
-		level -= opLevel / 10;
+		else 
+			level -= opLevel / 10;
 
 		if (level < ratio)
 			died ();

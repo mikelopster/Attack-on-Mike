@@ -66,12 +66,12 @@ public class GameManager : MonoBehaviour {
 		// Check Sync
 	}
 
-	void SpawnPlayer(string id, string name,Vector3 spawnPosition, Vector3 spawnRotation, bool mainCharactor) {
+	void SpawnPlayer(string id, string name,Vector3 spawnPosition, Vector3 spawnRotation, bool mainCharacter) {
 		GameObject NewPlayer = (GameObject) Instantiate(PlayerObject,spawnPosition,Quaternion.Euler(spawnRotation));
 		NewPlayer.name = name;
 		UserController resource = NewPlayer.GetComponent<UserController> ();
-		resource.mainCharactor = mainCharactor;
-		if (!mainCharactor) {
+		resource.mainCharacter = mainCharacter;
+		if (!mainCharacter) {
 			// Remove MainCharactor From other person
 			foreach (Transform child in NewPlayer.transform) 
 				if (child.name == "Main Camera") 
