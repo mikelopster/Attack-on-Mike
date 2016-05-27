@@ -39,6 +39,9 @@ public class UserController : MonoBehaviour
 	public InputSettings inputSetting = new InputSettings();
 	public MouseSettings mouseSetting = new MouseSettings();
 	public bool mainCharacter = false;
+	public bool onSync = false;
+	public Vector3 SyncPosition;
+	public float fracJourney;
 	public Player player;
 	public GameObject blood;
 	public GameObject flesh;
@@ -106,7 +109,10 @@ public class UserController : MonoBehaviour
 	{
 		forwardInput = Input.GetAxis (inputSetting.FORWARD_AXIS);//Debug.Log (forwardInput);
 		sideInput = Input.GetAxis (inputSetting.SIDE_AXIS);//Debug.Log (sideInput);
-		jumpInput = Input.GetButtonDown (inputSetting.JUMP_AXIS);//Debug.Log (jumpInput);
+		if (Input.GetKeyDown (KeyCode.Space))
+			jumpInput = true;
+			//jumpInput = Input.GetButtonDown (inputSetting.JUMP_AXIS);//Debug.Log (jumpInput);
+		
 		clickInput = Input.GetMouseButtonDown (mouseSetting.LEFT_CLICK);//Debug.Log (clickInput);
 	}
 
@@ -117,13 +123,25 @@ public class UserController : MonoBehaviour
 		clickInput = click;
 	}
 
+	void syncMovement() {
+		Vector3 interP = Vector3.Lerp (transform.position, new Vector3 (SyncPosition.x, SyncPosition.y, SyncPosition.z), fracJourney);
+
+		if (interP == transform.position)
+			onSync = false;
+		else
+			transform.position = interP;
+	}
+
 	void Update()
 	{
 		if (mainCharacter) {
 			GetInput ();
 			Turn ();
 			Face ();
-		}
+		} 
+
+		if (onSync)
+			syncMovement ();
 	}
 
 	void FixedUpdate()
@@ -143,8 +161,7 @@ public class UserController : MonoBehaviour
 	{
 		if (Mathf.Abs (forwardInput) > inputSetting.inputDelay || Mathf.Abs (sideInput) > inputSetting.inputDelay) 
 		{
-			Debug.Log ("Move Forward!");
-			GameManager.instance.SendMove (forwardInput, sideInput);
+			onSync = false;
 			velocity.z = moveSetting.walkVel * forwardInput;
 			velocity.x = moveSetting.walkVel * sideInput;
 		}
@@ -153,6 +170,8 @@ public class UserController : MonoBehaviour
 			velocity.z = 0;
 			velocity.x = 0;
 		}
+
+		GameManager.instance.SendMove (forwardInput, sideInput);
 	}
 
 	void Jump()
@@ -184,13 +203,13 @@ public class UserController : MonoBehaviour
 			int level = player.level;
 
 			if (clickInput && !eating) {
+
 				eating = true;
 
 				if (target.tag == "NPC") {
 					player.eat (true, 0);
-					// Server 
-					GameManager.instance.SendEatToServer(true,0);
 					Destroy (target);
+					Environment.instance.countSpawn--;
 					myScale = player.scale;
 					blood_clone = Instantiate (blood, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
 					flesh_clone = Instantiate (flesh, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
@@ -200,12 +219,12 @@ public class UserController : MonoBehaviour
 				else if (target.tag == "Player") {
 					if (target.GetComponent<Player> ()) {
 						opponent = target.GetComponent<Player> ();
-						// Eat
-						GameManager.instance.SendEatToServer(false,opponent.level);
+
 						player.eat (false, opponent.level);
 
 						// Eaten
 						GameManager.instance.SendIsEatenToServer(opponent._id,level);
+
 						opponent.eaten (level);
 						myScale = player.scale;
 						blood_clone = Instantiate (blood, transform.position+myScale/2*transform.forward+myScale*transform.up, transform.rotation) as GameObject;
