@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour {
 	int highestRank;
 	bool isJoined;
 	bool isSendForward = false;
+	bool isEndGame = false;
 
 	// Last Data
 	int lastLevel;
@@ -49,7 +50,7 @@ public class GameManager : MonoBehaviour {
 
 	private float startTime;
 	private float journeyLength;
-	public float speed = 10f;
+	public float speed = 50f;
 
 	void Awake() {
 		instance = this;
@@ -58,11 +59,12 @@ public class GameManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
+		isJoined = false;
 		highestRank = 10000;
 		isSendForward = true;
 		System.Random random = new System.Random ();
-		int randomPosX = random.Next (0, 50);
-		int randomPosZ = random.Next (0, 50);
+		int randomPosX = random.Next (-30, 30);
+		int randomPosZ = random.Next (-25, 20);
 		string position = randomPosX.ToString () + ":0:" + randomPosZ.ToString ();
 
 		client.SetOnJoin ((string id, string name) => {
@@ -96,20 +98,9 @@ public class GameManager : MonoBehaviour {
 	}
 
 	void Update () {
-
-		if (Input.GetKeyDown (KeyCode.X))
-			onCmd (spawnId + "?eat?false,10000");
-		else if (Input.GetKeyDown (KeyCode.Z))
-			onCmd ("1555?jump?true");
-		else if (Input.GetKeyDown (KeyCode.B))
-			onCmd ("1555?movement?0.5,0");
-		else if (Input.GetKeyDown (KeyCode.G))
-			onCmd (spawnId + "?isEaten?10000");
-
-		if (!PlayerControllerList.ContainsKey (spawnId) && isJoined)
-			EndGame ();
-		else
-			OnUpdateRanking ();
+		if(!isEndGame)
+			if (!PlayerControllerList.ContainsKey (spawnId) && isJoined)
+				EndGame ();
 
 	}
 
@@ -124,6 +115,7 @@ public class GameManager : MonoBehaviour {
 	IEnumerator Interval () {
 		while (true && (!isJoined || PlayerControllerList.ContainsKey(spawnId))) {
 			state.Sync ();
+			Debug.Log ("Sync!");
 			startTime = Time.time;
 			yield return new WaitForSeconds (2f);
 		}
@@ -147,7 +139,7 @@ public class GameManager : MonoBehaviour {
 				}
 			}
 
-			yield return new WaitForSeconds (0.4f);
+			yield return new WaitForSeconds (0.5f);
 		}
 	}
 		
@@ -160,6 +152,7 @@ public class GameManager : MonoBehaviour {
 		CancelInvoke();
 		EndGameCanvas.enabled = true;
 		sender.End ();
+		isEndGame = true;
 	}
 
 	void SpawnPlayer(string id, string thisPlayerId , string name,Vector3 spawnPosition, Vector3 spawnRotation, int level , bool mainCharacter) {
@@ -182,6 +175,8 @@ public class GameManager : MonoBehaviour {
 			SendSpawn(id,thisPlayerId,name,level,spawnPosition,spawnRotation);
 			SpawnIDList [thisPlayerId] = id;
 		}
+			
+		Debug.Log (SpawnIDList [thisPlayerId]);
 
 		PlayerControllerList [id] = resource;
 
@@ -199,54 +194,37 @@ public class GameManager : MonoBehaviour {
 
 	void OnSyncPlayer(string id, List<string> keys, List<string> values)  {
 		
-		string currentSpawnID = SpawnIDList [id];
 
-		// LV 
-		if (keys.IndexOf ("level") != -1) {
-			PlayerDataList[currentSpawnID].level = int.Parse(values[keys.IndexOf("level")]);
-			PlayerControllerList [currentSpawnID].changeScale (PlayerDataList[currentSpawnID].level/10000f);
+
+		if (SpawnIDList.ContainsKey (id)) {
+			string currentSpawnID = SpawnIDList [id];
+			// LV 
+			if (keys.IndexOf ("level") != -1) {
+				PlayerDataList [currentSpawnID].level = int.Parse (values [keys.IndexOf ("level")]);
+				PlayerControllerList [currentSpawnID].changeScale (PlayerDataList [currentSpawnID].level / 10000f);
+			}
+
+				
+			//  Sync Position
+			if (keys.IndexOf ("position") != -1) {
+				Vector3 syncPosition = ConvertToVector (values [keys.IndexOf ("position")]);
+				journeyLength = Vector3.Distance (PlayerControllerList [currentSpawnID].transform.position, new Vector3 (syncPosition.x, syncPosition.y, syncPosition.z));
+				float distCovered = (Time.time - startTime) * speed;
+				float fracJourney = distCovered / journeyLength;
+				PlayerControllerList [currentSpawnID].SyncPosition = syncPosition;
+				PlayerControllerList [currentSpawnID].fracJourney = fracJourney;
+				PlayerControllerList [currentSpawnID].onSync = true;
+				PlayerControllerList [currentSpawnID].transform.position = syncPosition;
+			}
+
+			// Sync Rotation
+			if (keys.IndexOf ("rotation") != -1) {
+				Vector3 syncRotation = ConvertToVector (values [keys.IndexOf ("rotation")]);
+				PlayerControllerList [currentSpawnID].transform.Rotate (syncRotation);
+			}
+
 		}
 
-			
-		//  Sync Position
-		if (keys.IndexOf ("position") != -1) {
-			Vector3 syncPosition = ConvertToVector (values [keys.IndexOf ("position")]);
-			journeyLength = Vector3.Distance (PlayerControllerList [currentSpawnID].transform.position, new Vector3 (syncPosition.x, syncPosition.y, syncPosition.z));
-			float distCovered = (Time.time - startTime) * speed;
-			float fracJourney = distCovered / journeyLength;
-			PlayerControllerList [currentSpawnID].SyncPosition = syncPosition;
-			PlayerControllerList [currentSpawnID].fracJourney = fracJourney;
-			PlayerControllerList [currentSpawnID].onSync = true;
-		}
-
-		// Sync Rotation
-		if (keys.IndexOf ("rotation") != -1) {
-			Vector3 syncRotation = ConvertToVector (values [keys.IndexOf ("rotation")]);
-			PlayerControllerList [currentSpawnID].transform.Rotate (syncRotation);
-		}
-
-	}
-
-	void OnUpdateRanking() {
-		HighRankText.text = "High Rank:\n";
-		Dictionary<string,int> ranking;
-
-		List<KeyValuePair<string, int>> list = new List<KeyValuePair<string, int>>();
-
-		foreach (KeyValuePair<string,Player> p in PlayerDataList) {
-			list.Add(new KeyValuePair<string, int>(p.Value.name,p.Value.level));
-		}
-			
-		list.Sort ((a1,a2) => a2.Value.CompareTo(a1.Value));
-
-		int count = 0;
-		foreach (KeyValuePair<string, int> l in list) {
-			if (count > 6)
-				break;
-			
-			HighRankText.text += l.Key.ToString() + " " + l.Value.ToString() + "\n";
-			count++;
-		}
 	}
 		
 	Vector3 ConvertToVector(string data) {
@@ -262,9 +240,7 @@ public class GameManager : MonoBehaviour {
 		return data [0].ToString () + ":" + data [1].ToString () + ":" + data [2].ToString ();
 	}
 		
-
 	void onCmd(string command) {
-		Debug.Log (command);
 		// Input String Command
 		string[] cmd = command.Split('?');
 		ControlPlayer(cmd[0],cmd[1],cmd[2]);
@@ -272,9 +248,10 @@ public class GameManager : MonoBehaviour {
 
 	void ControlPlayer(string ownerid, string type, string msg) {
 
-		if (!PlayerControllerList.ContainsKey (ownerid) && type != "spawn")
-			return;
 
+		if (ownerid != "none" && (!PlayerControllerList.ContainsKey (ownerid) && type != "spawn"))
+			return;
+	
 		string[] data;
 		Player player;
 		UserController userControl;
@@ -302,10 +279,24 @@ public class GameManager : MonoBehaviour {
 
 			if (ownerid == spawnId) {
 				if (lastLevel != PlayerDataList [spawnId].level) {
-					Debug.Log ("Update!");
 					state.Change ("level", lastLevel.ToString(),PlayerDataList [spawnId].level.ToString());
 					lastLevel = PlayerDataList [spawnId].level;
 				}
+			}
+
+			break;
+
+		case "highscore":
+			HighRankText.text = "High Rank:\n";
+			data = msg.Split (':');
+
+			foreach (string row in data) {
+				string[] col = row.Split (',');
+
+				if (SpawnIDList.ContainsKey (col [0])) {
+					HighRankText.text += PlayerDataList [SpawnIDList [col [0]]].name + " " + col[1] + "\n";
+				}
+
 			}
 
 			break;
@@ -334,10 +325,8 @@ public class GameManager : MonoBehaviour {
 		// Send Level to highscore
 		highestRank = PlayerDataList[spawnId].level > highestRank?PlayerDataList[spawnId].level:highestRank;
 		string cmd = spawnId + "?eat?" + NPC.ToString () + "," + opLevel.ToString ();
-//		state.Change("level",opLevel.ToString(),opNextLevel.ToString ());
 
 		if (lastLevel != PlayerDataList [spawnId].level) {
-			Debug.Log ("Update!");
 			state.Change ("level", lastLevel.ToString(),PlayerDataList [spawnId].level.ToString());
 			lastLevel = PlayerDataList [spawnId].level;
 		}

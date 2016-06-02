@@ -220,10 +220,9 @@ public class UserController : MonoBehaviour
 					if (target.GetComponent<Player> ()) {
 						opponent = target.GetComponent<Player> ();
 
-						player.eat (false, opponent.level);
-
 						// Eaten
 						GameManager.instance.SendIsEatenToServer(opponent._id,level);
+						player.eat (false, opponent.level);
 
 						opponent.eaten (level);
 						myScale = player.scale;

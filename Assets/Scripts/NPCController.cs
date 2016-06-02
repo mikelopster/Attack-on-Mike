@@ -6,7 +6,7 @@ public class NPCController : MonoBehaviour {
 	Vector3 TargetPosition;
 	float distance;
 	bool onWalk = false;
-	float speed = 0.05f;
+	float speed = 0.01f;
 	float posX,posZ;
 
 	// Use this for initialization

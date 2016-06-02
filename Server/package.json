@@ -1,0 +1,18 @@
+{
+  "name": "attack_on_mike",
+  "version": "0.1.0",
+  "description": "Websocket Application",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "debug": "DEBUG=app* node app.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "mongoose": "^4.4.19",
+    "shortid": "^2.2.6",
+    "ws": "^1.1.0"
+  }
+}

@@ -27,8 +27,8 @@ public class Environment : MonoBehaviour {
 
 		if (countSpawn < MaxNPC) {
 			System.Random random = new System.Random ();
-			int randomPosX = random.Next (0, 50);
-			int randomPosZ = random.Next (0, 50);
+			int randomPosX = random.Next (-30, 30);
+			int randomPosZ = random.Next (-25, 20);
 
 			Instantiate (NPCObject, new Vector3 (randomPosX, 5f, randomPosZ), Quaternion.identity);	
 			countSpawn++;
